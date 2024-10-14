@@ -20,9 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "CppUTest/TestHarness.h"
 #include "FakeTimers.hpp"
 #include <memory>
+#include <chrono>
+
+//must be last
+#include "CppUTest/TestHarness.h"
+
+using namespace std::chrono_literals;
 
 TEST_GROUP(FakeTimersTests) {
     std::unique_ptr<cms::test::FakeTimers> mUnderTest;
@@ -35,8 +40,20 @@ TEST_GROUP(FakeTimersTests) {
     void teardown() final
     {
     }
+
+    static void dummyCallback(cms::test::TimerHandle handle)
+    {
+        (void)handle;
+    }
 };
 
 TEST(FakeTimersTests, can_compile)
 {
+}
+
+TEST(FakeTimersTests, can_create_a_timer)
+{
+    using namespace cms::test;
+    auto handle = mUnderTest->TimerCreate("TEST", 100ms, TimerBehavior::SingleShot, nullptr, dummyCallback);
+    CHECK_TRUE(handle != 0);
 }
