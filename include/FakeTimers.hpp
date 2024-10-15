@@ -141,6 +141,15 @@ public:
         return true;
     }
 
+    void * GetTimerContext(TimerHandle handle)
+    {
+        Timer& timer = mTimers.at(handle - 1);
+        assert(timer.handle == handle);
+        assert(timer.allocated);
+
+        return timer.context;
+    }
+
     /**
      * Move time forward. Timers only have an opportunity
      * to fire based on sys tick period.
@@ -163,6 +172,11 @@ public:
                 ConsiderFiringTimer(timer);
             }
         }
+    }
+
+    void Tick()
+    {
+        MoveTimeForward(mSysTickPeriod);
     }
 
 private:

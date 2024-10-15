@@ -33,6 +33,7 @@ using namespace cms::test;
 
 static const std::chrono::milliseconds DEFAULT_SYS_TICK_PERIOD = 10ms;
 static const std::chrono::milliseconds DEFAULT_TIMER_PERIOD = DEFAULT_SYS_TICK_PERIOD * 10;
+static int TestContextObject = 1;
 
 TEST_GROUP(FakeTimersTests) {
 
@@ -58,7 +59,7 @@ TEST_GROUP(FakeTimersTests) {
     {
         auto handle = mUnderTest->TimerCreate(
                 "TEST", period, behavior,
-                nullptr, testCallback);
+                &TestContextObject, testCallback);
         return handle;
     }
 
@@ -179,6 +180,17 @@ TEST(FakeTimersTests, singleshot_timer_only_fires_once)
     mock().checkExpectations();
 }
 
+TEST(FakeTimersTests, tick_convenience_method_moves_time_forward_as_expected)
+{
+    const auto TEST_PERIOD = DEFAULT_SYS_TICK_PERIOD;
+    using namespace cms::test;
+    auto handle = CreateAndStartSingleShot(TEST_PERIOD);
+
+    mock().expectOneCall("testCallback").withParameter("handle", handle);
+    mUnderTest->Tick();
+    mock().checkExpectations();
+}
+
 TEST(FakeTimersTests, auto_reload_timer_fires_after_one_period_of_time)
 {
     const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
@@ -207,4 +219,11 @@ TEST(FakeTimersTests, auto_reload_timer_fires_multiple_times)
     mock().expectNCalls(RELOADS, "testCallback").withParameter("handle", handle);
     mUnderTest->MoveTimeForward(TEST_PERIOD * RELOADS);
     mock().checkExpectations();
+}
+
+TEST(FakeTimersTests, access_user_context_via_handle)
+{
+    auto handle = Create();
+    auto context = mUnderTest->GetTimerContext(handle);
+    CHECK_TRUE(context == &TestContextObject);
 }
