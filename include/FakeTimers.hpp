@@ -156,6 +156,27 @@ public:
     }
 
     /**
+     * Check if a timer is currently active or not
+     * @param handle - the timer handle
+     * @return true: timer is active and could fire in the future
+     *        false: timer not allocated or not started or
+     *               is a single shot timer that has fired
+     *               and not yet been restarted.
+     */
+    bool IsTimerActive(TimerHandle handle)
+    {
+        using namespace std::chrono_literals;
+
+        Timer& timer = mTimers.at(handle - 1);
+        if (!timer.allocated)
+        {
+            return false;
+        }
+
+        return timer.next != 0ms;
+    }
+
+    /**
      * Move time forward. Timers only have an opportunity
      * to fire based on sys tick period.
      * @param time

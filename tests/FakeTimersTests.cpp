@@ -227,3 +227,24 @@ TEST(FakeTimersTests, access_user_context_via_handle)
     auto context = mUnderTest->GetTimerContext(handle);
     CHECK_TRUE(context == &TestContextObject);
 }
+
+TEST(FakeTimersTests, is_timer_active_method_works_as_expected)
+{
+    auto handle = Create();
+
+    //upon creation, the timer is not yet active
+    CHECK_FALSE(mUnderTest->IsTimerActive(handle));
+
+    //start (activate) the single shot timer
+    mUnderTest->TimerStart(handle);
+
+    //timer is now active
+    CHECK_TRUE(mUnderTest->IsTimerActive(handle));
+
+    mock().expectOneCall("testCallback").withParameter("handle", handle);
+    mUnderTest->MoveTimeForward(DEFAULT_TIMER_PERIOD);
+    mock().checkExpectations();
+
+    //the single shot timer has fired, so now inactive
+    CHECK_FALSE(mUnderTest->IsTimerActive(handle));
+}
