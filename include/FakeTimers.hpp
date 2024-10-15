@@ -141,6 +141,11 @@ public:
         return true;
     }
 
+    /**
+     * Similar to FreeRTOS pvTimerGetTimerID
+     * @param handle
+     * @return: the user context provided when the timer was created
+     */
     void * GetTimerContext(TimerHandle handle)
     {
         Timer& timer = mTimers.at(handle - 1);
@@ -174,6 +179,10 @@ public:
         }
     }
 
+    /**
+     * Convenience method which moves time forward
+     * one sys tick period.
+     */
     void Tick()
     {
         MoveTimeForward(mSysTickPeriod);
