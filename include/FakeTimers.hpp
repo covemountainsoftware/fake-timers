@@ -133,10 +133,37 @@ public:
         }
 
         Timer& timer = mTimers.at(handle - 1);
-
         assert(timer.handle == handle);
 
         timer.next = mCurrent + timer.period;
+
+        return true;
+    }
+
+    /**
+     * Stop a timer.
+     * @param handle
+     * @return true: timer was found and stopped.
+     *         false: some error, such as non-existent timer.
+     */
+    bool TimerStop(TimerHandle handle)
+    {
+        using namespace std::chrono_literals;
+
+        if (handle > mTimers.size())
+        {
+            return false;
+        }
+        if (handle == 0)
+        {
+            return false;
+        }
+
+        Timer& timer = mTimers.at(handle - 1);
+        assert(timer.handle == handle);
+
+        //stop the timer
+        timer.next = 0ms;
 
         return true;
     }

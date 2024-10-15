@@ -248,3 +248,23 @@ TEST(FakeTimersTests, is_timer_active_method_works_as_expected)
     //the single shot timer has fired, so now inactive
     CHECK_FALSE(mUnderTest->IsTimerActive(handle));
 }
+
+TEST(FakeTimersTests, timer_stop_will_stop_the_timer)
+{
+    const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
+    using namespace cms::test;
+    auto handle = CreateAndStartSingleShot(TEST_PERIOD);
+    CHECK_TRUE(mUnderTest->IsTimerActive(handle));
+
+    mock().expectNoCall("testCallback");
+    mUnderTest->MoveTimeForward(TEST_PERIOD / 2);
+    mock().checkExpectations();
+
+    CHECK_TRUE(mUnderTest->IsTimerActive(handle));
+    mUnderTest->TimerStop(handle);
+    CHECK_FALSE(mUnderTest->IsTimerActive(handle));
+
+    mock().expectNoCall("testCallback");
+    mUnderTest->MoveTimeForward(TEST_PERIOD);
+    mock().checkExpectations();
+}
