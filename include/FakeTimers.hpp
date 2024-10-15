@@ -26,7 +26,7 @@
 #include <cstdint>
 #include <chrono>
 #include <functional>
-#include <list>
+#include <vector>
 
 namespace cms {
 namespace test {
@@ -43,11 +43,26 @@ enum class TimerBehavior
 class FakeTimers
 {
 public:
-    FakeTimers() = default;
+    explicit FakeTimers(std::chrono::milliseconds sysTickPeriod = std::chrono::milliseconds(10)) :
+       mTimers(),
+       mSysTickPeriod(sysTickPeriod)
+    {
+       mTimers.resize(25);
+    }
+
     virtual ~FakeTimers() = default;
     FakeTimers(FakeTimers const &) = delete;
     void operator=(FakeTimers const &x) = delete;
 
+    /**
+     * Create a timer. Modeled after FreeRTOS xTimerCreate
+     * @param timerName - a string
+     * @param period - time period in milliseconds for this timer
+     * @param behavior - single shot or repeating?
+     * @param context - a user provided context
+     * @param callback - the callback to execute when the timer fires
+     * @return - handle to the created timer. Zero (0) means an error.
+     */
     TimerHandle TimerCreate(
             const char * const timerName,
             const std::chrono::milliseconds& period,
@@ -55,15 +70,68 @@ public:
             void * const context,
             const TimerCallback& callback)
     {
-        Timer newTimer;
+        auto newTimerIndex = FindAvailableTimer();
+        Timer& newTimer = mTimers.at(newTimerIndex);
         newTimer.name = timerName;
         newTimer.period = period;
         newTimer.behavior = behavior;
         newTimer.context = context;
         newTimer.callback = callback;
-        mTimers.push_back(newTimer);
+        newTimer.allocated = true;
+        return newTimerIndex + 1;
+    }
 
-        return mTimers.size();
+    /**
+     * Delete a timer.
+     * @param handle
+     * @return true, deleted as expected. false, some error.
+     */
+    bool TimerDelete(TimerHandle handle)
+    {
+        if (handle > mTimers.size())
+        {
+            return false;
+        }
+        if (handle == 0)
+        {
+            return false;
+        }
+
+        uint32_t index = handle - 1;
+        mTimers.at(index) = Timer();
+        return true;
+    }
+
+    /**
+     * Start a timer
+     * @param handle
+     * @return true: started ok. false: some error.
+     */
+    bool TimerStart(TimerHandle handle)
+    {
+        if (handle > mTimers.size())
+        {
+            return false;
+        }
+        if (handle == 0)
+        {
+            return false;
+        }
+
+        //todo
+
+        return true;
+    }
+
+    /**
+     * Move time forward. Timers only have an opportunity
+     * to fire based on sys tick period.
+     * @param time
+     */
+    void MoveTimeForward(std::chrono::milliseconds time)
+    {
+        (void)time;
+        //todo
     }
 
 private:
@@ -74,9 +142,27 @@ private:
         TimerBehavior behavior = TimerBehavior::SingleShot;
         void * context = nullptr;
         TimerCallback callback = nullptr;
+
+        bool allocated = false;
     };
 
-    std::list<Timer> mTimers;
+    uint32_t FindAvailableTimer()
+    {
+        for (uint32_t i = 0; i < mTimers.size(); ++i)
+        {
+            if (!mTimers[i].allocated)
+            {
+                return i;
+            }
+        }
+
+        //allow growth, this isn't embedded after all
+        mTimers.emplace_back();
+        return mTimers.size() - 1;
+    }
+
+    std::vector<Timer> mTimers;
+    const std::chrono::milliseconds mSysTickPeriod;
 };
 
 } //namespace test

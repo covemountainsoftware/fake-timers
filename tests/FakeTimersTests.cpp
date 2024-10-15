@@ -23,11 +23,13 @@
 #include "FakeTimers.hpp"
 #include <memory>
 #include <chrono>
+#include "CppUTestExt/MockSupport.h"
 
 //must be last
 #include "CppUTest/TestHarness.h"
 
 using namespace std::chrono_literals;
+using namespace cms::test;
 
 TEST_GROUP(FakeTimersTests) {
     std::unique_ptr<cms::test::FakeTimers> mUnderTest;
@@ -39,11 +41,20 @@ TEST_GROUP(FakeTimersTests) {
 
     void teardown() final
     {
+        mock().clear();
     }
 
-    static void dummyCallback(cms::test::TimerHandle handle)
+    static void testCallback(cms::test::TimerHandle handle)
     {
-        (void)handle;
+        mock().actualCall("testCallback").withParameter("handle", handle);
+    }
+
+    TimerHandle Create(std::chrono::milliseconds period = 100ms) const
+    {
+        auto handle = mUnderTest->TimerCreate(
+                "TEST", period,
+                TimerBehavior::SingleShot, nullptr, testCallback);
+        return handle;
     }
 };
 
@@ -54,6 +65,61 @@ TEST(FakeTimersTests, can_compile)
 TEST(FakeTimersTests, can_create_a_timer)
 {
     using namespace cms::test;
-    auto handle = mUnderTest->TimerCreate("TEST", 100ms, TimerBehavior::SingleShot, nullptr, dummyCallback);
+    auto handle = Create();
     CHECK_TRUE(handle != 0);
+}
+
+TEST(FakeTimersTests, can_create_two_timers)
+{
+    using namespace cms::test;
+    auto handle1 = Create();
+    auto handle2 = Create();
+    CHECK_TRUE(handle1 != 0);
+    CHECK_TRUE(handle2 != 0);
+    CHECK_TRUE(handle1 != handle2);
+}
+
+TEST(FakeTimersTests, can_delete_a_timer)
+{
+    using namespace cms::test;
+    auto handle = Create();
+    CHECK_TRUE(handle != 0);
+
+    bool ok = mUnderTest->TimerDelete(handle);
+    CHECK_TRUE(ok);
+}
+
+TEST(FakeTimersTests, delete_will_error_if_zero_handle)
+{
+    using namespace cms::test;
+
+    bool ok = mUnderTest->TimerDelete(0);
+    CHECK_FALSE(ok);
+}
+
+TEST(FakeTimersTests, when_timer_is_started_does_not_fire_if_not_enough_time_has_passed)
+{
+    const auto TEST_PERIOD = 100ms;
+    using namespace cms::test;
+    auto handle = Create(TEST_PERIOD);
+    CHECK_TRUE(handle != 0);
+
+    bool ok = mUnderTest->TimerStart(handle);
+    CHECK_TRUE(ok);
+
+    mock().expectNoCall("testCallback");
+    mUnderTest->MoveTimeForward(TEST_PERIOD - 1ms);
+    mock().checkExpectations();
+}
+
+TEST(FakeTimersTests, when_timer_is_not_started_does_not_fire)
+{
+    const auto TEST_PERIOD = 100ms;
+    using namespace cms::test;
+    auto handle = Create(TEST_PERIOD);
+    CHECK_TRUE(handle != 0);
+
+    mock().expectNoCall("testCallback");
+    mUnderTest->MoveTimeForward(TEST_PERIOD * 3);
+    mock().checkExpectations();
 }
