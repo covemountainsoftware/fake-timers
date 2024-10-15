@@ -53,17 +53,28 @@ TEST_GROUP(FakeTimersTests) {
         mock().actualCall("testCallback").withParameter("handle", handle);
     }
 
-    TimerHandle Create(std::chrono::milliseconds period = DEFAULT_TIMER_PERIOD) const
+    TimerHandle Create(std::chrono::milliseconds period = DEFAULT_TIMER_PERIOD,
+                       TimerBehavior behavior = TimerBehavior::SingleShot) const
     {
         auto handle = mUnderTest->TimerCreate(
-                "TEST", period,
-                TimerBehavior::SingleShot, nullptr, testCallback);
+                "TEST", period, behavior,
+                nullptr, testCallback);
         return handle;
     }
 
     TimerHandle CreateAndStartSingleShot(std::chrono::milliseconds period = DEFAULT_TIMER_PERIOD) const
     {
         auto handle = Create(period);
+        CHECK_TRUE(handle != 0);
+
+        bool ok = mUnderTest->TimerStart(handle);
+        CHECK_TRUE(ok);
+        return handle;
+    }
+
+    TimerHandle CreateAndStartAutoReload(std::chrono::milliseconds period = DEFAULT_TIMER_PERIOD) const
+    {
+        auto handle = Create(period, cms::test::TimerBehavior::AutoReload);
         CHECK_TRUE(handle != 0);
 
         bool ok = mUnderTest->TimerStart(handle);
@@ -165,5 +176,35 @@ TEST(FakeTimersTests, singleshot_timer_only_fires_once)
 
     mock().expectOneCall("testCallback").withParameter("handle", handle);
     mUnderTest->MoveTimeForward(TEST_PERIOD * 100);
+    mock().checkExpectations();
+}
+
+TEST(FakeTimersTests, auto_reload_timer_fires_after_one_period_of_time)
+{
+    const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
+    using namespace cms::test;
+    auto handle = CreateAndStartAutoReload(TEST_PERIOD);
+
+    // 1.5 * period, should only fire once
+    mock().expectOneCall("testCallback").withParameter("handle", handle);
+    mUnderTest->MoveTimeForward(TEST_PERIOD + TEST_PERIOD / 2);
+    mock().checkExpectations();
+
+    //while here, ensure it fires on the next period, which should be 0.5 * period from now
+    mock().expectOneCall("testCallback").withParameter("handle", handle);
+    mUnderTest->MoveTimeForward(TEST_PERIOD / 2);
+    mock().checkExpectations();
+}
+
+TEST(FakeTimersTests, auto_reload_timer_fires_multiple_times)
+{
+    const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
+    using namespace cms::test;
+    auto handle = CreateAndStartAutoReload(TEST_PERIOD);
+
+    const int RELOADS = 100;
+
+    mock().expectNCalls(RELOADS, "testCallback").withParameter("handle", handle);
+    mUnderTest->MoveTimeForward(TEST_PERIOD * RELOADS);
     mock().checkExpectations();
 }
