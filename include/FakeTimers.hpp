@@ -46,7 +46,8 @@ class FakeTimers
 public:
     explicit FakeTimers(std::chrono::milliseconds sysTickPeriod = std::chrono::milliseconds(10)) :
        mTimers(),
-       mSysTickPeriod(sysTickPeriod)
+       mSysTickPeriod(sysTickPeriod),
+       mCurrent(0)
     {
        mTimers.resize(25);
     }
@@ -74,6 +75,8 @@ public:
             void * const context,
             const TimerCallback& callback)
     {
+        using namespace std::chrono_literals;
+
         if ((period.count() % mSysTickPeriod.count()) != 0)
         {
             return 0;
@@ -87,7 +90,9 @@ public:
         newTimer.context = context;
         newTimer.callback = callback;
         newTimer.allocated = true;
-        return newTimerIndex + 1;
+        newTimer.handle = newTimerIndex + 1;
+        newTimer.next = 0ms;
+        return newTimer.handle;
     }
 
     /**
@@ -127,7 +132,11 @@ public:
             return false;
         }
 
-        //todo
+        Timer& timer = mTimers.at(handle - 1);
+
+        assert(timer.handle == handle);
+
+        timer.next = mCurrent + timer.period;
 
         return true;
     }
@@ -137,10 +146,23 @@ public:
      * to fire based on sys tick period.
      * @param time
      */
-    void MoveTimeForward(std::chrono::milliseconds time)
+    void MoveTimeForward(const std::chrono::milliseconds& time)
     {
-        (void)time;
-        //todo
+        using namespace std::chrono_literals;
+
+        std::chrono::milliseconds remaining = time;
+
+        while (remaining > std::chrono::milliseconds(0))
+        {
+            auto this_delta = std::min(remaining, mSysTickPeriod);
+            mCurrent += this_delta;
+            remaining -= this_delta;
+
+            for (auto& timer : mTimers)
+            {
+                ConsiderFiringTimer(timer);
+            }
+        }
     }
 
 private:
@@ -152,7 +174,9 @@ private:
         void * context = nullptr;
         TimerCallback callback = nullptr;
 
+        TimerHandle handle = 0;
         bool allocated = false;
+        std::chrono::milliseconds next = {};
     };
 
     uint32_t FindAvailableTimer()
@@ -170,8 +194,47 @@ private:
         return mTimers.size() - 1;
     }
 
+    void ConsiderFiringTimer(Timer& timer)
+    {
+        using namespace std::chrono_literals;
+
+        if (!timer.allocated)
+        {
+            return;
+        }
+
+        if (timer.period <= 0ms)
+        {
+            return;
+        }
+
+        if (timer.next <= 0ms)
+        {
+            return;
+        }
+
+        if (mCurrent >= timer.next)
+        {
+            //fire away
+            if (timer.callback != nullptr)
+            {
+                timer.callback(timer.handle);
+            }
+
+            if (timer.behavior == TimerBehavior::AutoReload)
+            {
+                timer.next = mCurrent + timer.period;
+            }
+            else
+            {
+                timer.next = 0ms;
+            }
+        }
+    }
+
     std::vector<Timer> mTimers;
     const std::chrono::milliseconds mSysTickPeriod;
+    std::chrono::milliseconds mCurrent;
 };
 
 } //namespace test

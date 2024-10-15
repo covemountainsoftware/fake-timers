@@ -60,6 +60,16 @@ TEST_GROUP(FakeTimersTests) {
                 TimerBehavior::SingleShot, nullptr, testCallback);
         return handle;
     }
+
+    TimerHandle CreateAndStartSingleShot(std::chrono::milliseconds period = DEFAULT_TIMER_PERIOD) const
+    {
+        auto handle = Create(period);
+        CHECK_TRUE(handle != 0);
+
+        bool ok = mUnderTest->TimerStart(handle);
+        CHECK_TRUE(ok);
+        return handle;
+    }
 };
 
 TEST(FakeTimersTests, can_compile)
@@ -103,7 +113,7 @@ TEST(FakeTimersTests, delete_will_error_if_zero_handle)
 
 TEST(FakeTimersTests, when_timer_is_started_does_not_fire_if_not_enough_time_has_passed)
 {
-    const auto TEST_PERIOD = 100ms;
+    const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
     using namespace cms::test;
     auto handle = Create(TEST_PERIOD);
     CHECK_TRUE(handle != 0);
@@ -118,7 +128,7 @@ TEST(FakeTimersTests, when_timer_is_started_does_not_fire_if_not_enough_time_has
 
 TEST(FakeTimersTests, when_timer_is_not_started_does_not_fire)
 {
-    const auto TEST_PERIOD = 100ms;
+    const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
     using namespace cms::test;
     auto handle = Create(TEST_PERIOD);
     CHECK_TRUE(handle != 0);
@@ -134,4 +144,26 @@ TEST(FakeTimersTests, timer_period_must_adhere_to_sys_tick_period)
     using namespace cms::test;
     auto handle = Create(TEST_PERIOD);
     CHECK_TRUE(handle == 0); //should fail
+}
+
+TEST(FakeTimersTests, when_timer_is_started_will_fire_if_enough_time_has_passed)
+{
+    const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
+    using namespace cms::test;
+    auto handle = CreateAndStartSingleShot(TEST_PERIOD);
+
+    mock().expectOneCall("testCallback").withParameter("handle", handle);
+    mUnderTest->MoveTimeForward(TEST_PERIOD);
+    mock().checkExpectations();
+}
+
+TEST(FakeTimersTests, singleshot_timer_only_fires_once)
+{
+    const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
+    using namespace cms::test;
+    auto handle = CreateAndStartSingleShot(TEST_PERIOD);
+
+    mock().expectOneCall("testCallback").withParameter("handle", handle);
+    mUnderTest->MoveTimeForward(TEST_PERIOD * 100);
+    mock().checkExpectations();
 }
