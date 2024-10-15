@@ -31,12 +31,16 @@
 using namespace std::chrono_literals;
 using namespace cms::test;
 
+static const std::chrono::milliseconds DEFAULT_SYS_TICK_PERIOD = 10ms;
+static const std::chrono::milliseconds DEFAULT_TIMER_PERIOD = DEFAULT_SYS_TICK_PERIOD * 10;
+
 TEST_GROUP(FakeTimersTests) {
+
     std::unique_ptr<cms::test::FakeTimers> mUnderTest;
 
     void setup() final
     {
-        mUnderTest = std::make_unique<cms::test::FakeTimers>();
+        mUnderTest = std::make_unique<cms::test::FakeTimers>(DEFAULT_SYS_TICK_PERIOD);
     }
 
     void teardown() final
@@ -49,7 +53,7 @@ TEST_GROUP(FakeTimersTests) {
         mock().actualCall("testCallback").withParameter("handle", handle);
     }
 
-    TimerHandle Create(std::chrono::milliseconds period = 100ms) const
+    TimerHandle Create(std::chrono::milliseconds period = DEFAULT_TIMER_PERIOD) const
     {
         auto handle = mUnderTest->TimerCreate(
                 "TEST", period,
@@ -122,4 +126,12 @@ TEST(FakeTimersTests, when_timer_is_not_started_does_not_fire)
     mock().expectNoCall("testCallback");
     mUnderTest->MoveTimeForward(TEST_PERIOD * 3);
     mock().checkExpectations();
+}
+
+TEST(FakeTimersTests, timer_period_must_adhere_to_sys_tick_period)
+{
+    const auto TEST_PERIOD = 3ms;
+    using namespace cms::test;
+    auto handle = Create(TEST_PERIOD);
+    CHECK_TRUE(handle == 0); //should fail
 }

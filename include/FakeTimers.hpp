@@ -62,7 +62,10 @@ public:
      * @param behavior - single shot or repeating?
      * @param context - a user provided context
      * @param callback - the callback to execute when the timer fires
-     * @return - handle to the created timer. Zero (0) means an error.
+     * @return - handle to the created timer.
+     *           Zero (0) means an error, for example, the
+     *           period must be modulo the configured sys tick
+     *           period.
      */
     TimerHandle TimerCreate(
             const char * const timerName,
@@ -71,7 +74,10 @@ public:
             void * const context,
             const TimerCallback& callback)
     {
-        assert((period.count() % mSysTickPeriod.count()) == 0);
+        if ((period.count() % mSysTickPeriod.count()) != 0)
+        {
+            return 0;
+        }
 
         auto newTimerIndex = FindAvailableTimer();
         Timer& newTimer = mTimers.at(newTimerIndex);
