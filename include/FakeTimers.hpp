@@ -27,6 +27,7 @@
 #include <chrono>
 #include <functional>
 #include <vector>
+#include <cassert>
 
 namespace cms {
 namespace test {
@@ -70,6 +71,8 @@ public:
             void * const context,
             const TimerCallback& callback)
     {
+        assert((period.count() % mSysTickPeriod.count()) == 0);
+
         auto newTimerIndex = FindAvailableTimer();
         Timer& newTimer = mTimers.at(newTimerIndex);
         newTimer.name = timerName;
