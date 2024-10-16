@@ -293,6 +293,7 @@ public:
      *        false: timer not allocated or not started or
      *               is a single shot timer that has fired
      *               and not yet been restarted.
+     * @note: Reference FreeRTOS xTimerIsTimerActive
      */
     bool IsTimerActive(TimerHandle handle) const
     {
