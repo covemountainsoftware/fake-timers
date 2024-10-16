@@ -366,6 +366,7 @@ public:
      * when this timer will fire/expire next.
      * @param handle
      * @return the tick.  Will be negative if the timer is not active.
+     * @note: Reference FreeRTOS xTimerGetExpiryTime
      */
     Duration TimerGetExpiryTime(Handle handle) const
     {
