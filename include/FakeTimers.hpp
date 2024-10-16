@@ -227,6 +227,34 @@ public:
     }
 
     /**
+     * Change a timer's behavior setting.
+     * Does not impact timer's active status.
+     * @param handle
+     * @param behavior
+     * @return: true: changed ok.  false: some error.
+     * @note: Reference FreeRTOS vTimerSetReloadMode
+     */
+    bool TimerSetBehavior(TimerHandle handle, TimerBehavior behavior)
+    {
+        using namespace std::chrono_literals;
+
+        if (handle > mTimers.size())
+        {
+            return false;
+        }
+        if (handle == 0)
+        {
+            return false;
+        }
+
+        Timer& timer = mTimers.at(handle - 1);
+        assert(timer.handle == handle);
+
+        timer.behavior = behavior;
+        return true;
+    }
+
+    /**
      * Get the timer's user context.
      * @param handle
      * @return: the user context provided when the timer was created

@@ -266,6 +266,17 @@ TEST(FakeTimersTests, access_timer_behavior_via_handle)
     CHECK_TRUE(TimerBehavior::SingleShot == behavior);
 }
 
+TEST(FakeTimersTests, set_timer_behavior_via_handle)
+{
+    auto handle = Create();
+    auto behavior = mUnderTest->GetTimerBehavior(handle);
+    CHECK_TRUE(TimerBehavior::SingleShot == behavior);
+
+    mUnderTest->TimerSetBehavior(handle, TimerBehavior::AutoReload);
+    behavior = mUnderTest->GetTimerBehavior(handle);
+    CHECK_TRUE(TimerBehavior::AutoReload == behavior);
+}
+
 TEST(FakeTimersTests, is_timer_active_method_works_as_expected)
 {
     auto handle = Create();
