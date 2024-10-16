@@ -77,6 +77,10 @@ public:
     {
         using namespace std::chrono_literals;
 
+        if (period <= 0ms)
+        {
+            return false;
+        }
         if ((period.count() % mSysTickPeriod.count()) != 0)
         {
             return 0;
@@ -177,6 +181,38 @@ public:
     bool TimerReset(TimerHandle handle)
     {
        return TimerStart(handle);
+    }
+
+    /**
+     * Modeled after FreeRTOS xTimerChangePeriod
+     * @param handle
+     * @param newPeriod
+     * @return: true: changed ok.  false: some error.
+     */
+    bool TimerChangePeriod(TimerHandle handle, std::chrono::milliseconds newPeriod)
+    {
+        using namespace std::chrono_literals;
+
+        if (handle > mTimers.size())
+        {
+            return false;
+        }
+        if (handle == 0)
+        {
+            return false;
+        }
+        if (newPeriod <= 0ms)
+        {
+            return false;
+        }
+
+        Timer& timer = mTimers.at(handle - 1);
+        assert(timer.handle == handle);
+
+        timer.period = newPeriod;
+        timer.next = mCurrent + timer.period;
+
+        return true;
     }
 
     /**

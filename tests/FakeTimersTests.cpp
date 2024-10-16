@@ -312,3 +312,23 @@ TEST(FakeTimersTests, timer_reset_will_restart_a_repeating_timer)
     mUnderTest->Tick();
     mock().checkExpectations();
 }
+
+TEST(FakeTimersTests, timer_change_period_changes_the_period)
+{
+    const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
+    using namespace cms::test;
+    auto handle = CreateAndStartAutoReload(TEST_PERIOD);
+
+    //move time a bit
+    mUnderTest->Tick();
+
+    CHECK_TRUE(mUnderTest->TimerChangePeriod(handle, 1s));
+
+    mock().expectNoCall("testCallback");
+    mUnderTest->MoveTimeForward(1s - DEFAULT_SYS_TICK_PERIOD);
+    mock().checkExpectations();
+
+    mock().expectOneCall("testCallback").withParameter("handle", handle);
+    mUnderTest->Tick();
+    mock().checkExpectations();
+}
