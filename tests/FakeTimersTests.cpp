@@ -252,6 +252,13 @@ TEST(FakeTimersTests, access_timer_name_via_handle)
     STRCMP_EQUAL("TEST", name);
 }
 
+TEST(FakeTimersTests, access_timer_period_via_handle)
+{
+    auto handle = Create(1s);
+    auto period = mUnderTest->GetTimerPeriod(handle);
+    CHECK_TRUE(1s == period);
+}
+
 TEST(FakeTimersTests, is_timer_active_method_works_as_expected)
 {
     auto handle = Create();

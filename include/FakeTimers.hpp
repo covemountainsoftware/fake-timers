@@ -66,7 +66,7 @@ public:
     void operator=(FakeTimers const &x) = delete;
 
     /**
-     * Create a timer. Modeled after FreeRTOS xTimerCreate
+     * Create a timer.
      * @param timerName - a string
      * @param period - time period in milliseconds for this timer
      * @param behavior - single shot or repeating?
@@ -76,6 +76,7 @@ public:
      *           Zero (0) means an error, for example, the
      *           period must be modulo the configured sys tick
      *           period.
+     * @note: Reference FreeRTOS xTimerCreate
      */
     TimerHandle TimerCreate(
             const char * timerName,
@@ -182,10 +183,10 @@ public:
     }
 
     /**
-     * re-starts a timer that was previously created with TimerCreate() API function.
-     * Modeled after FreeRTOS xTimerReset.
+     * Re-starts a timer that was previously created with TimerCreate() API function.
      * @param handle
      * @return
+     * @note: Reference FreeRTOS xTimerReset
      */
     bool TimerReset(TimerHandle handle)
     {
@@ -193,10 +194,11 @@ public:
     }
 
     /**
-     * Modeled after FreeRTOS xTimerChangePeriod
+     * Change a timer's period setting.
      * @param handle
      * @param newPeriod
      * @return: true: changed ok.  false: some error.
+     * @note: Reference FreeRTOS xTimerChangePeriod
      */
     bool TimerChangePeriod(TimerHandle handle, TimerDuration newPeriod)
     {
@@ -225,9 +227,10 @@ public:
     }
 
     /**
-     * Similar to FreeRTOS pvTimerGetTimerID
+     * Get the timer's user context.
      * @param handle
      * @return: the user context provided when the timer was created
+     * @note: Reference FreeRTOS pvTimerGetTimerID
      */
     UserContext GetTimerContext(TimerHandle handle) const
     {
@@ -239,9 +242,10 @@ public:
     }
 
     /**
-     * Similar to FreeRTOS pcTimerGetName
+     * Get the timer's name.
      * @param handle
      * @return the timer name provided when created.
+     * @note: Reference FreeRTOS pcTimerGetName
      */
     const char * GetTimerName(TimerHandle handle) const
     {
@@ -250,6 +254,21 @@ public:
         assert(timer.allocated);
 
         return timer.name;
+    }
+
+    /**
+     * Get the timer's period setting.
+     * @param handle
+     * @return
+     * @note: Reference FreeRTOS xTimerGetPeriod
+     */
+    TimerDuration GetTimerPeriod(TimerHandle handle) const
+    {
+        const Timer& timer = mTimers.at(handle - 1);
+        assert(timer.handle == handle);
+        assert(timer.allocated);
+
+        return timer.period;
     }
 
     /**
