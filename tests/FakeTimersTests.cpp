@@ -37,11 +37,11 @@ static int TestContextObject = 1;
 
 TEST_GROUP(FakeTimersTests) {
 
-    std::unique_ptr<cms::test::FakeTimers> mUnderTest;
+    std::unique_ptr<FakeTimers> mUnderTest;
 
     void setup() final
     {
-        mUnderTest = std::make_unique<cms::test::FakeTimers>(DEFAULT_SYS_TICK_PERIOD);
+        mUnderTest = std::make_unique<FakeTimers>(DEFAULT_SYS_TICK_PERIOD);
     }
 
     void teardown() final
@@ -49,9 +49,11 @@ TEST_GROUP(FakeTimersTests) {
         mock().clear();
     }
 
-    static void testCallback(cms::test::TimerHandle handle)
+    static void testCallback(TimerHandle handle, UserContext context)
     {
-        mock().actualCall("testCallback").withParameter("handle", handle);
+        (void)context;
+        mock().actualCall("testCallback")
+            .withParameter("handle", handle);
     }
 
     TimerHandle Create(std::chrono::milliseconds period = DEFAULT_TIMER_PERIOD,
@@ -332,3 +334,4 @@ TEST(FakeTimersTests, timer_change_period_changes_the_period)
     mUnderTest->Tick();
     mock().checkExpectations();
 }
+

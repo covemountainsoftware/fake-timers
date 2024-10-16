@@ -33,7 +33,10 @@ namespace cms {
 namespace test {
 
 using TimerHandle = uint32_t;
-using TimerCallback = std::function<void(TimerHandle)>;
+using UserContext = void*;
+using TimerCallback = std::function<void(TimerHandle, UserContext)>;
+using TimerDuration = std::chrono::nanoseconds;
+
 
 enum class TimerBehavior
 {
@@ -44,7 +47,7 @@ enum class TimerBehavior
 class FakeTimers
 {
 public:
-    explicit FakeTimers(std::chrono::milliseconds sysTickPeriod = std::chrono::milliseconds(10)) :
+    explicit FakeTimers(TimerDuration sysTickPeriod = std::chrono::milliseconds(10)) :
        mTimers(),
        mSysTickPeriod(sysTickPeriod),
        mCurrent(0)
@@ -69,10 +72,10 @@ public:
      *           period.
      */
     TimerHandle TimerCreate(
-            const char * const timerName,
-            const std::chrono::milliseconds& period,
+            const char * timerName,
+            const TimerDuration& period,
             const TimerBehavior behavior,
-            void * const context,
+            UserContext context,
             const TimerCallback& callback)
     {
         using namespace std::chrono_literals;
@@ -189,7 +192,7 @@ public:
      * @param newPeriod
      * @return: true: changed ok.  false: some error.
      */
-    bool TimerChangePeriod(TimerHandle handle, std::chrono::milliseconds newPeriod)
+    bool TimerChangePeriod(TimerHandle handle, TimerDuration newPeriod)
     {
         using namespace std::chrono_literals;
 
@@ -220,7 +223,7 @@ public:
      * @param handle
      * @return: the user context provided when the timer was created
      */
-    void * GetTimerContext(TimerHandle handle)
+    UserContext GetTimerContext(TimerHandle handle)
     {
         Timer& timer = mTimers.at(handle - 1);
         assert(timer.handle == handle);
@@ -255,13 +258,13 @@ public:
      * to fire based on sys tick period.
      * @param time
      */
-    void MoveTimeForward(const std::chrono::milliseconds& time)
+    void MoveTimeForward(const TimerDuration& time)
     {
         using namespace std::chrono_literals;
 
-        std::chrono::milliseconds remaining = time;
+        TimerDuration remaining = time;
 
-        while (remaining > std::chrono::milliseconds(0))
+        while (remaining > TimerDuration(0))
         {
             auto this_delta = std::min(remaining, mSysTickPeriod);
             mCurrent += this_delta;
@@ -287,14 +290,14 @@ private:
     struct Timer
     {
         const char * name = nullptr;
-        std::chrono::milliseconds period = {};
+        TimerDuration period = {};
         TimerBehavior behavior = TimerBehavior::SingleShot;
-        void * context = nullptr;
+        UserContext context = nullptr;
         TimerCallback callback = nullptr;
 
         TimerHandle handle = 0;
         bool allocated = false;
-        std::chrono::milliseconds next = {};
+        TimerDuration next = {};
     };
 
     uint32_t FindAvailableTimer()
@@ -336,7 +339,7 @@ private:
             //fire away
             if (timer.callback != nullptr)
             {
-                timer.callback(timer.handle);
+                timer.callback(timer.handle, timer.context);
             }
 
             if (timer.behavior == TimerBehavior::AutoReload)
@@ -351,8 +354,8 @@ private:
     }
 
     std::vector<Timer> mTimers;
-    const std::chrono::milliseconds mSysTickPeriod;
-    std::chrono::milliseconds mCurrent;
+    const TimerDuration mSysTickPeriod;
+    TimerDuration mCurrent;
 };
 
 } //namespace test
