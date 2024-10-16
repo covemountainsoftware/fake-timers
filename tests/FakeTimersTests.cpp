@@ -382,3 +382,32 @@ TEST(FakeTimersTests, timer_change_period_changes_the_period)
     mock().checkExpectations();
 }
 
+TEST(FakeTimersTests, get_expiry_time_method)
+{
+    mock().ignoreOtherCalls();
+
+    const auto TEST_PERIOD = 2s;
+    using namespace cms::test;
+    auto handle = CreateAndStartAutoReload(TEST_PERIOD);
+    mUnderTest->MoveTimeForward(1s);
+
+    auto expiryTime = mUnderTest->TimerGetExpiryTime(handle);
+    CHECK_TRUE(2s == expiryTime);
+
+    mUnderTest->MoveTimeForward(2s);
+    expiryTime = mUnderTest->TimerGetExpiryTime(handle);
+    CHECK_TRUE(4s == expiryTime);
+}
+
+TEST(FakeTimersTests, get_expiry_time_method_returns_negative_value_if_timer_is_expired)
+{
+    mock().ignoreOtherCalls();
+
+    const auto TEST_PERIOD = 1s;
+    using namespace cms::test;
+    auto handle = CreateAndStartSingleShot(TEST_PERIOD);
+    mUnderTest->MoveTimeForward(2s);
+
+    auto expiryTime = mUnderTest->TimerGetExpiryTime(handle);
+    CHECK_TRUE(expiryTime < 0ns);
+}

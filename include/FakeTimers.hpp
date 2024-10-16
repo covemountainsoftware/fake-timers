@@ -319,6 +319,29 @@ public:
     }
 
     /**
+     * Get the next time tick on the internal time base
+     * when this timer will fire/expire next.
+     * @param handle
+     * @return the tick.  Will be negative if the timer is not active.
+     */
+    TimerDuration TimerGetExpiryTime(TimerHandle handle) const
+    {
+        const Timer& timer = mTimers.at(handle - 1);
+        assert(timer.handle == handle);
+        assert(timer.allocated);
+
+        if (TimerIsActive(handle))
+        {
+            return timer.next;
+        }
+        else
+        {
+            return TimerDuration(-1);
+        }
+    }
+
+
+    /**
      * Check if a timer is currently active or not
      * @param handle - the timer handle
      * @return true: timer is active and could fire in the future
