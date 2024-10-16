@@ -245,6 +245,13 @@ TEST(FakeTimersTests, access_user_context_via_handle)
     CHECK_TRUE(context == &TestContextObject);
 }
 
+TEST(FakeTimersTests, access_timer_name_via_handle)
+{
+    auto handle = Create();
+    auto name = mUnderTest->GetTimerName(handle);
+    STRCMP_EQUAL("TEST", name);
+}
+
 TEST(FakeTimersTests, is_timer_active_method_works_as_expected)
 {
     auto handle = Create();

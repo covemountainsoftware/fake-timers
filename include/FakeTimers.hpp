@@ -239,6 +239,20 @@ public:
     }
 
     /**
+     * Similar to FreeRTOS pcTimerGetName
+     * @param handle
+     * @return the timer name provided when created.
+     */
+    const char * GetTimerName(TimerHandle handle) const
+    {
+        const Timer& timer = mTimers.at(handle - 1);
+        assert(timer.handle == handle);
+        assert(timer.allocated);
+
+        return timer.name;
+    }
+
+    /**
      * Check if a timer is currently active or not
      * @param handle - the timer handle
      * @return true: timer is active and could fire in the future
