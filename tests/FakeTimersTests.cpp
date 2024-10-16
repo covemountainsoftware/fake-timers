@@ -268,3 +268,47 @@ TEST(FakeTimersTests, timer_stop_will_stop_the_timer)
     mUnderTest->MoveTimeForward(TEST_PERIOD);
     mock().checkExpectations();
 }
+
+TEST(FakeTimersTests, timer_reset_will_restart_a_singleshot_timer)
+{
+    const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
+    using namespace cms::test;
+    auto handle = CreateAndStartSingleShot(TEST_PERIOD);
+    CHECK_TRUE(mUnderTest->IsTimerActive(handle));
+
+    mock().expectOneCall("testCallback").withParameter("handle", handle);
+    mUnderTest->MoveTimeForward(TEST_PERIOD);
+    mock().checkExpectations();
+
+    //move a bit forward
+    mUnderTest->Tick();
+
+    //reset (i.e. re-activate the single shot timer)
+    CHECK_TRUE(mUnderTest->TimerReset(handle));
+
+    mock().expectOneCall("testCallback").withParameter("handle", handle);
+    mUnderTest->MoveTimeForward(TEST_PERIOD);
+    mock().checkExpectations();
+}
+
+TEST(FakeTimersTests, timer_reset_will_restart_a_repeating_timer)
+{
+    const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
+    using namespace cms::test;
+    auto handle = CreateAndStartAutoReload(TEST_PERIOD);
+    CHECK_TRUE(mUnderTest->IsTimerActive(handle));
+
+    //move time a bit forward
+    mUnderTest->Tick();
+
+    //reset (i.e. re-activate the timer)
+    CHECK_TRUE(mUnderTest->TimerReset(handle));
+
+    mock().expectNoCall("testCallback");
+    mUnderTest->MoveTimeForward(TEST_PERIOD - DEFAULT_SYS_TICK_PERIOD);
+    mock().checkExpectations();
+
+    mock().expectOneCall("testCallback").withParameter("handle", handle);
+    mUnderTest->Tick();
+    mock().checkExpectations();
+}

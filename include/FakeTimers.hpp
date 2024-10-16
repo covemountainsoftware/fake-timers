@@ -169,6 +169,17 @@ public:
     }
 
     /**
+     * re-starts a timer that was previously created with TimerCreate() API function.
+     * Modeled after FreeRTOS xTimerReset.
+     * @param handle
+     * @return
+     */
+    bool TimerReset(TimerHandle handle)
+    {
+       return TimerStart(handle);
+    }
+
+    /**
      * Similar to FreeRTOS pvTimerGetTimerID
      * @param handle
      * @return: the user context provided when the timer was created
