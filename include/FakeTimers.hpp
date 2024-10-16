@@ -49,6 +49,10 @@ enum class TimerBehavior
  * it is called "Fake", is for this to be used in a unit testing environment
  * to replace any RTOS provided timer functionality, giving unit tests the
  * ability to control "time" during unit testing.
+ *
+ * @note: Underlying timebase uses std::chrono::nanoseconds.
+ *        Sorry, unit testing is limited to 292 years of so of time.
+ *        Overflow is not accounted for!
  */
 class FakeTimers
 {
