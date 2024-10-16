@@ -245,6 +245,18 @@ TEST(FakeTimersTests, access_user_context_via_handle)
     CHECK_TRUE(context == &TestContextObject);
 }
 
+TEST(FakeTimersTests, set_user_context_via_handle)
+{
+    static int AnotherTestContextObject = 2;
+    auto handle = Create();
+    auto context = mUnderTest->TimerGetContext(handle);
+    CHECK_TRUE(context == &TestContextObject);
+
+    CHECK_TRUE(mUnderTest->TimerSetContext(handle, &AnotherTestContextObject));
+    context = mUnderTest->TimerGetContext(handle);
+    CHECK_TRUE(context == &AnotherTestContextObject);
+}
+
 TEST(FakeTimersTests, access_timer_name_via_handle)
 {
     auto handle = Create();

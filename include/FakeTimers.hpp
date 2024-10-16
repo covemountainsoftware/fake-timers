@@ -39,6 +39,9 @@ namespace test {
  * to replace RTOS timer functionality, giving unit tests the ability to
  * control "time" during unit testing.
  *
+ * This class is NOT thread safe. It is intended to be used in a unit testing
+ * environment using a single thread context.
+ *
  * @note: Underlying timebase uses std::chrono::nanoseconds.
  *        Sorry, unit testing is limited to 292 years of so of time.
  *        Overflow is not accounted for!
@@ -118,6 +121,7 @@ public:
      * Delete a timer.
      * @param handle
      * @return true, deleted as expected. false, some error.
+     * @note: Reference FreeRTOS xTimerDelete
      */
     bool TimerDelete(Handle handle)
     {
@@ -140,6 +144,7 @@ public:
      * Start a timer
      * @param handle
      * @return true: started ok. false: some error.
+     * @note: Reference FreeRTOS xTimerStart
      */
     bool TimerStart(Handle handle)
     {
@@ -166,6 +171,7 @@ public:
      * @param handle
      * @return true: timer was found and stopped.
      *         false: some error, such as non-existent timer.
+     * @note: Reference FreeRTOS xTimerStop
      */
     bool TimerStop(Handle handle)
     {
@@ -278,6 +284,34 @@ public:
         assert(timer.allocated);
 
         return timer.context;
+    }
+
+    /**
+     * Change (set) the user context for a particular timer
+     * @param handle
+     * @param newContext
+     * @return true: set ok.  false, some error.
+     * @note: Reference FreeRTOS vTimerSetTimerID
+     */
+    bool TimerSetContext(Handle handle, Context newContext)
+    {
+        using namespace std::chrono_literals;
+
+        if (handle > mTimers.size())
+        {
+            return false;
+        }
+
+        if (handle == 0)
+        {
+            return false;
+        }
+
+        Timer& timer = mTimers.at(handle - 1);
+        assert(timer.handle == handle);
+
+        timer.context = newContext;
+        return true;
     }
 
     /**
