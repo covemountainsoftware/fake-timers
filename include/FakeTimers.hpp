@@ -32,23 +32,12 @@
 namespace cms {
 namespace test {
 
-using TimerHandle = uint32_t;
-using UserContext = void*;
-using TimerCallback = std::function<void(TimerHandle, UserContext)>;
-using TimerDuration = std::chrono::nanoseconds;
-
-enum class TimerBehavior
-{
-    SingleShot,
-    AutoReload
-};
-
 /**
- * class FakeTimers implements a software timer functionality loosely equivalent
+ * The FakeTimers class implements a software timer functionality loosely equivalent
  * to the Timer API provided by FreeRTOS. The intention, and the reason
  * it is called "Fake", is for this to be used in a unit testing environment
- * to replace any RTOS provided timer functionality, giving unit tests the
- * ability to control "time" during unit testing.
+ * to replace RTOS timer functionality, giving unit tests the ability to
+ * control "time" during unit testing.
  *
  * @note: Underlying timebase uses std::chrono::nanoseconds.
  *        Sorry, unit testing is limited to 292 years of so of time.
@@ -57,7 +46,18 @@ enum class TimerBehavior
 class FakeTimers
 {
 public:
-    explicit FakeTimers(TimerDuration sysTickPeriod = std::chrono::milliseconds(10)) :
+    using Handle = uint32_t;
+    using Context = void*;
+    using Callback = std::function<void(Handle, Context)>;
+    using Duration = std::chrono::nanoseconds;
+
+    enum class Behavior
+    {
+        SingleShot,
+        AutoReload
+    };
+
+    explicit FakeTimers(Duration sysTickPeriod = std::chrono::milliseconds(10)) :
        mTimers(),
        mSysTickPeriod(sysTickPeriod),
        mCurrent(0)
@@ -82,12 +82,12 @@ public:
      *           period.
      * @note: Reference FreeRTOS xTimerCreate
      */
-    TimerHandle TimerCreate(
+    Handle TimerCreate(
             const char * timerName,
-            const TimerDuration& period,
-            const TimerBehavior behavior,
-            UserContext context,
-            const TimerCallback& callback)
+            const Duration& period,
+            const Behavior behavior,
+            Context context,
+            const Callback& callback)
     {
         using namespace std::chrono_literals;
 
@@ -95,6 +95,7 @@ public:
         {
             return false;
         }
+
         if ((period.count() % mSysTickPeriod.count()) != 0)
         {
             return 0;
@@ -118,12 +119,13 @@ public:
      * @param handle
      * @return true, deleted as expected. false, some error.
      */
-    bool TimerDelete(TimerHandle handle)
+    bool TimerDelete(Handle handle)
     {
         if (handle > mTimers.size())
         {
             return false;
         }
+
         if (handle == 0)
         {
             return false;
@@ -139,12 +141,13 @@ public:
      * @param handle
      * @return true: started ok. false: some error.
      */
-    bool TimerStart(TimerHandle handle)
+    bool TimerStart(Handle handle)
     {
         if (handle > mTimers.size())
         {
             return false;
         }
+
         if (handle == 0)
         {
             return false;
@@ -164,7 +167,7 @@ public:
      * @return true: timer was found and stopped.
      *         false: some error, such as non-existent timer.
      */
-    bool TimerStop(TimerHandle handle)
+    bool TimerStop(Handle handle)
     {
         using namespace std::chrono_literals;
 
@@ -172,6 +175,7 @@ public:
         {
             return false;
         }
+
         if (handle == 0)
         {
             return false;
@@ -192,7 +196,7 @@ public:
      * @return
      * @note: Reference FreeRTOS xTimerReset
      */
-    bool TimerReset(TimerHandle handle)
+    bool TimerReset(Handle handle)
     {
        return TimerStart(handle);
     }
@@ -204,7 +208,7 @@ public:
      * @return: true: changed ok.  false: some error.
      * @note: Reference FreeRTOS xTimerChangePeriod
      */
-    bool TimerChangePeriod(TimerHandle handle, TimerDuration newPeriod)
+    bool TimerChangePeriod(Handle handle, Duration newPeriod)
     {
         using namespace std::chrono_literals;
 
@@ -212,10 +216,12 @@ public:
         {
             return false;
         }
+
         if (handle == 0)
         {
             return false;
         }
+
         if (newPeriod <= 0ms)
         {
             return false;
@@ -238,7 +244,7 @@ public:
      * @return: true: changed ok.  false: some error.
      * @note: Reference FreeRTOS vTimerSetReloadMode
      */
-    bool TimerSetBehavior(TimerHandle handle, TimerBehavior behavior)
+    bool TimerSetBehavior(Handle handle, Behavior behavior)
     {
         using namespace std::chrono_literals;
 
@@ -246,6 +252,7 @@ public:
         {
             return false;
         }
+
         if (handle == 0)
         {
             return false;
@@ -264,7 +271,7 @@ public:
      * @return: the user context provided when the timer was created
      * @note: Reference FreeRTOS pvTimerGetTimerID
      */
-    UserContext TimerGetContext(TimerHandle handle) const
+    Context TimerGetContext(Handle handle) const
     {
         const Timer& timer = mTimers.at(handle - 1);
         assert(timer.handle == handle);
@@ -279,7 +286,7 @@ public:
      * @return the timer name provided when created.
      * @note: Reference FreeRTOS pcTimerGetName
      */
-    const char * TimerGetName(TimerHandle handle) const
+    const char * TimerGetName(Handle handle) const
     {
         const Timer& timer = mTimers.at(handle - 1);
         assert(timer.handle == handle);
@@ -294,7 +301,7 @@ public:
      * @return
      * @note: Reference FreeRTOS xTimerGetPeriod
      */
-    TimerDuration TimerGetPeriod(TimerHandle handle) const
+    Duration TimerGetPeriod(Handle handle) const
     {
         const Timer& timer = mTimers.at(handle - 1);
         assert(timer.handle == handle);
@@ -309,7 +316,7 @@ public:
      * @return
      * @note: Reference FreeRTOS xTimerGetReloadMode
      */
-    TimerBehavior TimerGetBehavior(TimerHandle handle) const
+    Behavior TimerGetBehavior(Handle handle) const
     {
         const Timer& timer = mTimers.at(handle - 1);
         assert(timer.handle == handle);
@@ -324,7 +331,7 @@ public:
      * @param handle
      * @return the tick.  Will be negative if the timer is not active.
      */
-    TimerDuration TimerGetExpiryTime(TimerHandle handle) const
+    Duration TimerGetExpiryTime(Handle handle) const
     {
         const Timer& timer = mTimers.at(handle - 1);
         assert(timer.handle == handle);
@@ -336,7 +343,7 @@ public:
         }
         else
         {
-            return TimerDuration(-1);
+            return Duration(-1);
         }
     }
 
@@ -350,7 +357,7 @@ public:
      *               and not yet been restarted.
      * @note: Reference FreeRTOS xTimerIsTimerActive
      */
-    bool TimerIsActive(TimerHandle handle) const
+    bool TimerIsActive(Handle handle) const
     {
         using namespace std::chrono_literals;
 
@@ -368,13 +375,13 @@ public:
      * to fire based on sys tick period.
      * @param time
      */
-    void MoveTimeForward(const TimerDuration& time)
+    void MoveTimeForward(const Duration& time)
     {
         using namespace std::chrono_literals;
 
-        TimerDuration remaining = time;
+        Duration remaining = time;
 
-        while (remaining > TimerDuration(0))
+        while (remaining > Duration(0))
         {
             auto this_delta = std::min(remaining, mSysTickPeriod);
             mCurrent += this_delta;
@@ -399,7 +406,7 @@ public:
     /**
      * Get the internal current time base
      */
-    TimerDuration GetCurrentInternalTime() const
+    Duration GetCurrentInternalTime() const
     {
         return mCurrent;
     }
@@ -408,14 +415,14 @@ private:
     struct Timer
     {
         const char * name = nullptr;
-        TimerDuration period = {};
-        TimerBehavior behavior = TimerBehavior::SingleShot;
-        UserContext context = nullptr;
-        TimerCallback callback = nullptr;
+        Duration period = {};
+        Behavior behavior = Behavior::SingleShot;
+        Context context = nullptr;
+        Callback callback = nullptr;
 
-        TimerHandle handle = 0;
+        Handle handle = 0;
         bool allocated = false;
-        TimerDuration next = {};
+        Duration next = {};
     };
 
     uint32_t FindAvailableTimer()
@@ -460,7 +467,7 @@ private:
                 timer.callback(timer.handle, timer.context);
             }
 
-            if (timer.behavior == TimerBehavior::AutoReload)
+            if (timer.behavior == Behavior::AutoReload)
             {
                 timer.next = mCurrent + timer.period;
             }
@@ -472,8 +479,8 @@ private:
     }
 
     std::vector<Timer> mTimers;
-    const TimerDuration mSysTickPeriod;
-    TimerDuration mCurrent;
+    const Duration mSysTickPeriod;
+    Duration mCurrent;
 };
 
 } //namespace test

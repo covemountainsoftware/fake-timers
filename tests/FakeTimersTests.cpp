@@ -49,15 +49,15 @@ TEST_GROUP(FakeTimersTests) {
         mock().clear();
     }
 
-    static void testCallback(TimerHandle handle, UserContext context)
+    static void testCallback(FakeTimers::Handle handle, FakeTimers::Context context)
     {
         (void)context;
         mock().actualCall("testCallback")
             .withParameter("handle", handle);
     }
 
-    TimerHandle Create(std::chrono::milliseconds period = DEFAULT_TIMER_PERIOD,
-                       TimerBehavior behavior = TimerBehavior::SingleShot) const
+    FakeTimers::Handle Create(std::chrono::milliseconds period = DEFAULT_TIMER_PERIOD,
+                              FakeTimers::Behavior behavior = FakeTimers::Behavior::SingleShot) const
     {
         auto handle = mUnderTest->TimerCreate(
                 "TEST", period, behavior,
@@ -65,7 +65,7 @@ TEST_GROUP(FakeTimersTests) {
         return handle;
     }
 
-    TimerHandle CreateAndStartSingleShot(std::chrono::milliseconds period = DEFAULT_TIMER_PERIOD) const
+    FakeTimers::Handle CreateAndStartSingleShot(std::chrono::milliseconds period = DEFAULT_TIMER_PERIOD) const
     {
         auto handle = Create(period);
         CHECK_TRUE(handle != 0);
@@ -75,9 +75,9 @@ TEST_GROUP(FakeTimersTests) {
         return handle;
     }
 
-    TimerHandle CreateAndStartAutoReload(std::chrono::milliseconds period = DEFAULT_TIMER_PERIOD) const
+    FakeTimers::Handle CreateAndStartAutoReload(std::chrono::milliseconds period = DEFAULT_TIMER_PERIOD) const
     {
-        auto handle = Create(period, cms::test::TimerBehavior::AutoReload);
+        auto handle = Create(period, FakeTimers::Behavior::AutoReload);
         CHECK_TRUE(handle != 0);
 
         bool ok = mUnderTest->TimerStart(handle);
@@ -263,18 +263,18 @@ TEST(FakeTimersTests, access_timer_behavior_via_handle)
 {
     auto handle = Create();
     auto behavior = mUnderTest->TimerGetBehavior(handle);
-    CHECK_TRUE(TimerBehavior::SingleShot == behavior);
+    CHECK_TRUE(FakeTimers::Behavior::SingleShot == behavior);
 }
 
 TEST(FakeTimersTests, set_timer_behavior_via_handle)
 {
     auto handle = Create();
     auto behavior = mUnderTest->TimerGetBehavior(handle);
-    CHECK_TRUE(TimerBehavior::SingleShot == behavior);
+    CHECK_TRUE(FakeTimers::Behavior::SingleShot == behavior);
 
-    mUnderTest->TimerSetBehavior(handle, TimerBehavior::AutoReload);
+    mUnderTest->TimerSetBehavior(handle, FakeTimers::Behavior::AutoReload);
     behavior = mUnderTest->TimerGetBehavior(handle);
-    CHECK_TRUE(TimerBehavior::AutoReload == behavior);
+    CHECK_TRUE(FakeTimers::Behavior::AutoReload == behavior);
 }
 
 TEST(FakeTimersTests, is_timer_active_method_works_as_expected)
