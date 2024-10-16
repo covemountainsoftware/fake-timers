@@ -92,14 +92,12 @@ TEST(FakeTimersTests, can_compile)
 
 TEST(FakeTimersTests, can_create_a_timer)
 {
-    using namespace cms::test;
     auto handle = Create();
     CHECK_TRUE(handle != 0);
 }
 
 TEST(FakeTimersTests, can_create_two_timers)
 {
-    using namespace cms::test;
     auto handle1 = Create();
     auto handle2 = Create();
     CHECK_TRUE(handle1 != 0);
@@ -109,7 +107,6 @@ TEST(FakeTimersTests, can_create_two_timers)
 
 TEST(FakeTimersTests, can_delete_a_timer)
 {
-    using namespace cms::test;
     auto handle = Create();
     CHECK_TRUE(handle != 0);
 
@@ -119,8 +116,6 @@ TEST(FakeTimersTests, can_delete_a_timer)
 
 TEST(FakeTimersTests, delete_will_error_if_zero_handle)
 {
-    using namespace cms::test;
-
     bool ok = mUnderTest->TimerDelete(0);
     CHECK_FALSE(ok);
 }
@@ -143,7 +138,6 @@ TEST(FakeTimersTests, move_time_forward_moves_internal_time_point)
 TEST(FakeTimersTests, when_timer_is_started_does_not_fire_if_not_enough_time_has_passed)
 {
     const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
-    using namespace cms::test;
     auto handle = Create(TEST_PERIOD);
     CHECK_TRUE(handle != 0);
 
@@ -158,7 +152,6 @@ TEST(FakeTimersTests, when_timer_is_started_does_not_fire_if_not_enough_time_has
 TEST(FakeTimersTests, when_timer_is_not_started_does_not_fire)
 {
     const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
-    using namespace cms::test;
     auto handle = Create(TEST_PERIOD);
     CHECK_TRUE(handle != 0);
 
@@ -170,7 +163,6 @@ TEST(FakeTimersTests, when_timer_is_not_started_does_not_fire)
 TEST(FakeTimersTests, timer_period_must_adhere_to_sys_tick_period)
 {
     const auto TEST_PERIOD = 3ms;
-    using namespace cms::test;
     auto handle = Create(TEST_PERIOD);
     CHECK_TRUE(handle == 0); //should fail
 }
@@ -178,7 +170,6 @@ TEST(FakeTimersTests, timer_period_must_adhere_to_sys_tick_period)
 TEST(FakeTimersTests, when_timer_is_started_will_fire_if_enough_time_has_passed)
 {
     const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
-    using namespace cms::test;
     auto handle = CreateAndStartSingleShot(TEST_PERIOD);
 
     mock().expectOneCall("testCallback").withParameter("handle", handle);
@@ -189,7 +180,6 @@ TEST(FakeTimersTests, when_timer_is_started_will_fire_if_enough_time_has_passed)
 TEST(FakeTimersTests, singleshot_timer_only_fires_once)
 {
     const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
-    using namespace cms::test;
     auto handle = CreateAndStartSingleShot(TEST_PERIOD);
 
     mock().expectOneCall("testCallback").withParameter("handle", handle);
@@ -200,7 +190,6 @@ TEST(FakeTimersTests, singleshot_timer_only_fires_once)
 TEST(FakeTimersTests, tick_convenience_method_moves_time_forward_as_expected)
 {
     const auto TEST_PERIOD = DEFAULT_SYS_TICK_PERIOD;
-    using namespace cms::test;
     auto handle = CreateAndStartSingleShot(TEST_PERIOD);
 
     mock().expectOneCall("testCallback").withParameter("handle", handle);
@@ -211,7 +200,6 @@ TEST(FakeTimersTests, tick_convenience_method_moves_time_forward_as_expected)
 TEST(FakeTimersTests, auto_reload_timer_fires_after_one_period_of_time)
 {
     const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
-    using namespace cms::test;
     auto handle = CreateAndStartAutoReload(TEST_PERIOD);
 
     // 1.5 * period, should only fire once
@@ -228,7 +216,6 @@ TEST(FakeTimersTests, auto_reload_timer_fires_after_one_period_of_time)
 TEST(FakeTimersTests, auto_reload_timer_fires_multiple_times)
 {
     const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
-    using namespace cms::test;
     auto handle = CreateAndStartAutoReload(TEST_PERIOD);
 
     const int RELOADS = 100;
@@ -313,7 +300,6 @@ TEST(FakeTimersTests, is_timer_active_method_works_as_expected)
 TEST(FakeTimersTests, timer_stop_will_stop_the_timer)
 {
     const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
-    using namespace cms::test;
     auto handle = CreateAndStartSingleShot(TEST_PERIOD);
     CHECK_TRUE(mUnderTest->TimerIsActive(handle));
 
@@ -333,7 +319,6 @@ TEST(FakeTimersTests, timer_stop_will_stop_the_timer)
 TEST(FakeTimersTests, timer_reset_will_restart_a_singleshot_timer)
 {
     const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
-    using namespace cms::test;
     auto handle = CreateAndStartSingleShot(TEST_PERIOD);
     CHECK_TRUE(mUnderTest->TimerIsActive(handle));
 
@@ -355,7 +340,6 @@ TEST(FakeTimersTests, timer_reset_will_restart_a_singleshot_timer)
 TEST(FakeTimersTests, timer_reset_will_restart_a_repeating_timer)
 {
     const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
-    using namespace cms::test;
     auto handle = CreateAndStartAutoReload(TEST_PERIOD);
     CHECK_TRUE(mUnderTest->TimerIsActive(handle));
 
@@ -377,7 +361,6 @@ TEST(FakeTimersTests, timer_reset_will_restart_a_repeating_timer)
 TEST(FakeTimersTests, timer_change_period_changes_the_period)
 {
     const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
-    using namespace cms::test;
     auto handle = CreateAndStartAutoReload(TEST_PERIOD);
 
     //move time a bit
@@ -399,7 +382,6 @@ TEST(FakeTimersTests, get_expiry_time_method)
     mock().ignoreOtherCalls();
 
     const auto TEST_PERIOD = 2s;
-    using namespace cms::test;
     auto handle = CreateAndStartAutoReload(TEST_PERIOD);
     mUnderTest->MoveTimeForward(1s);
 
@@ -416,10 +398,61 @@ TEST(FakeTimersTests, get_expiry_time_method_returns_negative_value_if_timer_is_
     mock().ignoreOtherCalls();
 
     const auto TEST_PERIOD = 1s;
-    using namespace cms::test;
     auto handle = CreateAndStartSingleShot(TEST_PERIOD);
     mUnderTest->MoveTimeForward(2s);
 
     auto expiryTime = mUnderTest->TimerGetExpiryTime(handle);
     CHECK_TRUE(expiryTime < 0ns);
+}
+
+static void PendTestFunc(FakeTimers::Context context, uint32_t param2)
+{
+    mock().actualCall("PendTestFunc")
+    .withParameter("context", context)
+    .withParameter("param2", param2);
+}
+
+TEST(FakeTimersTests, supports_pend_function_call_on_next_tick)
+{
+    static int SomeContextObject = 3;
+    const uint32_t MyTestParam2 = 22;
+    const auto TEST_PERIOD = 1s;
+    CreateAndStartSingleShot(TEST_PERIOD);
+
+    CHECK_TRUE(mUnderTest->PendFunctionCall(PendTestFunc, &SomeContextObject, MyTestParam2));
+
+    mock().expectOneCall("PendTestFunc")
+             .withParameter("context", &SomeContextObject)
+             .withParameter("param2", MyTestParam2);
+    mock().expectOneCall("testCallback").ignoreOtherParameters();
+    mUnderTest->MoveTimeForward(2s);
+    mock().checkExpectations();
+
+    mock().expectNoCall("PendTestFunc");
+    mUnderTest->Tick();
+    mock().checkExpectations();
+}
+
+TEST(FakeTimersTests, supports_pend_function_call_on_next_tick_and_pendables_executed_fifo)
+{
+    static int SomeContextObject = 3;
+    const uint32_t MyTestParam2a = 22;
+    const uint32_t MyTestParam2b = 33;
+    const auto TEST_PERIOD = 1s;
+
+    CHECK_TRUE(mUnderTest->PendFunctionCall(PendTestFunc, &SomeContextObject, MyTestParam2a));
+    CHECK_TRUE(mUnderTest->PendFunctionCall(PendTestFunc, &SomeContextObject, MyTestParam2b));
+
+    mock().expectOneCall("PendTestFunc")
+            .withParameter("context", &SomeContextObject)
+            .withParameter("param2", MyTestParam2a);
+    mock().expectOneCall("PendTestFunc")
+            .withParameter("context", &SomeContextObject)
+            .withParameter("param2", MyTestParam2b);
+    mUnderTest->Tick();
+    mock().checkExpectations();
+
+    mock().expectNoCall("PendTestFunc");
+    mUnderTest->Tick();
+    mock().checkExpectations();
 }

@@ -27,6 +27,7 @@
 #include <chrono>
 #include <functional>
 #include <vector>
+#include <queue>
 #include <cassert>
 
 namespace cms {
@@ -53,6 +54,7 @@ public:
     using Context = void*;
     using Callback = std::function<void(Handle, Context)>;
     using Duration = std::chrono::nanoseconds;
+    using Pendable = std::function<void(Context, uint32_t)>;
 
     enum class Behavior
     {
@@ -405,6 +407,23 @@ public:
     }
 
     /**
+     * Pend a function and data to be executed on the next call to Tick
+     * or move time forward. These will be executed before any timers might
+     * expire.
+     * @param func
+     * @param context
+     * @param param2
+     * @return true: captured for future execution ok.
+     *        false: some error.
+     * @note: Reference FreeRTOS xTimerPendFunctionCall
+     */
+    bool PendFunctionCall(const Pendable& func, Context context, uint32_t param2)
+    {
+        mPendQueue.push( InternalPendable {func, context, param2});
+        return true;
+    }
+
+    /**
      * Move time forward. Timers only have an opportunity
      * to fire based on sys tick period.
      * @param time
@@ -412,6 +431,8 @@ public:
     void MoveTimeForward(const Duration& time)
     {
         using namespace std::chrono_literals;
+
+        ExecutePendables();
 
         Duration remaining = time;
 
@@ -512,9 +533,31 @@ private:
         }
     }
 
+    void ExecutePendables()
+    {
+        while (!mPendQueue.empty())
+        {
+            auto internal = mPendQueue.front();
+            if (internal.func != nullptr)
+            {
+                internal.func(internal.context, internal.param2);
+            }
+
+            mPendQueue.pop();
+        }
+    }
+
+    struct InternalPendable
+    {
+        Pendable func;
+        Context context;
+        uint32_t param2;
+    };
+
     std::vector<Timer> mTimers;
     const Duration mSysTickPeriod;
     Duration mCurrent;
+    std::queue<InternalPendable> mPendQueue;
 };
 
 } //namespace test
