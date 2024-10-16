@@ -37,13 +37,19 @@ using UserContext = void*;
 using TimerCallback = std::function<void(TimerHandle, UserContext)>;
 using TimerDuration = std::chrono::nanoseconds;
 
-
 enum class TimerBehavior
 {
     SingleShot,
     AutoReload
 };
 
+/**
+ * class FakeTimers implements a software timer functionality loosely equivalent
+ * to the Timer API provided by FreeRTOS. The intention, and the reason
+ * it is called "Fake", is for this to be used in a unit testing environment
+ * to replace any RTOS provided timer functionality, giving unit tests the
+ * ability to control "time" during unit testing.
+ */
 class FakeTimers
 {
 public:
@@ -223,9 +229,9 @@ public:
      * @param handle
      * @return: the user context provided when the timer was created
      */
-    UserContext GetTimerContext(TimerHandle handle)
+    UserContext GetTimerContext(TimerHandle handle) const
     {
-        Timer& timer = mTimers.at(handle - 1);
+        const Timer& timer = mTimers.at(handle - 1);
         assert(timer.handle == handle);
         assert(timer.allocated);
 
@@ -240,11 +246,11 @@ public:
      *               is a single shot timer that has fired
      *               and not yet been restarted.
      */
-    bool IsTimerActive(TimerHandle handle)
+    bool IsTimerActive(TimerHandle handle) const
     {
         using namespace std::chrono_literals;
 
-        Timer& timer = mTimers.at(handle - 1);
+        const Timer& timer = mTimers.at(handle - 1);
         if (!timer.allocated)
         {
             return false;
@@ -284,6 +290,14 @@ public:
     void Tick()
     {
         MoveTimeForward(mSysTickPeriod);
+    }
+
+    /**
+     * Get the internal current time base
+     */
+    TimerDuration GetCurrentInternalTime() const
+    {
+        return mCurrent;
     }
 
 private:

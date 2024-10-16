@@ -125,6 +125,21 @@ TEST(FakeTimersTests, delete_will_error_if_zero_handle)
     CHECK_FALSE(ok);
 }
 
+TEST(FakeTimersTests, move_time_forward_moves_internal_time_point)
+{
+    using namespace std::chrono_literals;
+    //upon creation, should be at 0
+    CHECK_TRUE(0ms == mUnderTest->GetCurrentInternalTime());
+
+    //Tick will move time forward one sys tick period
+    mUnderTest->Tick();
+    CHECK_TRUE(DEFAULT_SYS_TICK_PERIOD == mUnderTest->GetCurrentInternalTime());
+
+    //move time forward moves arbitrary amount, as long as it is modulo the sys tick
+    mUnderTest->MoveTimeForward(1s);
+    CHECK_TRUE(DEFAULT_SYS_TICK_PERIOD + 1s == mUnderTest->GetCurrentInternalTime());
+}
+
 TEST(FakeTimersTests, when_timer_is_started_does_not_fire_if_not_enough_time_has_passed)
 {
     const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
