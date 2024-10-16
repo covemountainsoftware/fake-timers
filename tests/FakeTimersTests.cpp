@@ -259,6 +259,13 @@ TEST(FakeTimersTests, access_timer_period_via_handle)
     CHECK_TRUE(1s == period);
 }
 
+TEST(FakeTimersTests, access_timer_behavior_via_handle)
+{
+    auto handle = Create();
+    auto behavior = mUnderTest->GetTimerBehavior(handle);
+    CHECK_TRUE(TimerBehavior::SingleShot == behavior);
+}
+
 TEST(FakeTimersTests, is_timer_active_method_works_as_expected)
 {
     auto handle = Create();

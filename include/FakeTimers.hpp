@@ -272,6 +272,21 @@ public:
     }
 
     /**
+     * Get the timer's behavior setting.
+     * @param handle
+     * @return
+     * @note: Reference FreeRTOS xTimerGetReloadMode
+     */
+    TimerBehavior GetTimerBehavior(TimerHandle handle) const
+    {
+        const Timer& timer = mTimers.at(handle - 1);
+        assert(timer.handle == handle);
+        assert(timer.allocated);
+
+        return timer.behavior;
+    }
+
+    /**
      * Check if a timer is currently active or not
      * @param handle - the timer handle
      * @return true: timer is active and could fire in the future
