@@ -241,39 +241,39 @@ TEST(FakeTimersTests, auto_reload_timer_fires_multiple_times)
 TEST(FakeTimersTests, access_user_context_via_handle)
 {
     auto handle = Create();
-    auto context = mUnderTest->GetTimerContext(handle);
+    auto context = mUnderTest->TimerGetContext(handle);
     CHECK_TRUE(context == &TestContextObject);
 }
 
 TEST(FakeTimersTests, access_timer_name_via_handle)
 {
     auto handle = Create();
-    auto name = mUnderTest->GetTimerName(handle);
+    auto name = mUnderTest->TimerGetName(handle);
     STRCMP_EQUAL("TEST", name);
 }
 
 TEST(FakeTimersTests, access_timer_period_via_handle)
 {
     auto handle = Create(1s);
-    auto period = mUnderTest->GetTimerPeriod(handle);
+    auto period = mUnderTest->TimerGetPeriod(handle);
     CHECK_TRUE(1s == period);
 }
 
 TEST(FakeTimersTests, access_timer_behavior_via_handle)
 {
     auto handle = Create();
-    auto behavior = mUnderTest->GetTimerBehavior(handle);
+    auto behavior = mUnderTest->TimerGetBehavior(handle);
     CHECK_TRUE(TimerBehavior::SingleShot == behavior);
 }
 
 TEST(FakeTimersTests, set_timer_behavior_via_handle)
 {
     auto handle = Create();
-    auto behavior = mUnderTest->GetTimerBehavior(handle);
+    auto behavior = mUnderTest->TimerGetBehavior(handle);
     CHECK_TRUE(TimerBehavior::SingleShot == behavior);
 
     mUnderTest->TimerSetBehavior(handle, TimerBehavior::AutoReload);
-    behavior = mUnderTest->GetTimerBehavior(handle);
+    behavior = mUnderTest->TimerGetBehavior(handle);
     CHECK_TRUE(TimerBehavior::AutoReload == behavior);
 }
 
@@ -282,20 +282,20 @@ TEST(FakeTimersTests, is_timer_active_method_works_as_expected)
     auto handle = Create();
 
     //upon creation, the timer is not yet active
-    CHECK_FALSE(mUnderTest->IsTimerActive(handle));
+    CHECK_FALSE(mUnderTest->TimerIsActive(handle));
 
     //start (activate) the single shot timer
     mUnderTest->TimerStart(handle);
 
     //timer is now active
-    CHECK_TRUE(mUnderTest->IsTimerActive(handle));
+    CHECK_TRUE(mUnderTest->TimerIsActive(handle));
 
     mock().expectOneCall("testCallback").withParameter("handle", handle);
     mUnderTest->MoveTimeForward(DEFAULT_TIMER_PERIOD);
     mock().checkExpectations();
 
     //the single shot timer has fired, so now inactive
-    CHECK_FALSE(mUnderTest->IsTimerActive(handle));
+    CHECK_FALSE(mUnderTest->TimerIsActive(handle));
 }
 
 TEST(FakeTimersTests, timer_stop_will_stop_the_timer)
@@ -303,15 +303,15 @@ TEST(FakeTimersTests, timer_stop_will_stop_the_timer)
     const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
     using namespace cms::test;
     auto handle = CreateAndStartSingleShot(TEST_PERIOD);
-    CHECK_TRUE(mUnderTest->IsTimerActive(handle));
+    CHECK_TRUE(mUnderTest->TimerIsActive(handle));
 
     mock().expectNoCall("testCallback");
     mUnderTest->MoveTimeForward(TEST_PERIOD / 2);
     mock().checkExpectations();
 
-    CHECK_TRUE(mUnderTest->IsTimerActive(handle));
+    CHECK_TRUE(mUnderTest->TimerIsActive(handle));
     mUnderTest->TimerStop(handle);
-    CHECK_FALSE(mUnderTest->IsTimerActive(handle));
+    CHECK_FALSE(mUnderTest->TimerIsActive(handle));
 
     mock().expectNoCall("testCallback");
     mUnderTest->MoveTimeForward(TEST_PERIOD);
@@ -323,7 +323,7 @@ TEST(FakeTimersTests, timer_reset_will_restart_a_singleshot_timer)
     const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
     using namespace cms::test;
     auto handle = CreateAndStartSingleShot(TEST_PERIOD);
-    CHECK_TRUE(mUnderTest->IsTimerActive(handle));
+    CHECK_TRUE(mUnderTest->TimerIsActive(handle));
 
     mock().expectOneCall("testCallback").withParameter("handle", handle);
     mUnderTest->MoveTimeForward(TEST_PERIOD);
@@ -345,7 +345,7 @@ TEST(FakeTimersTests, timer_reset_will_restart_a_repeating_timer)
     const auto TEST_PERIOD = DEFAULT_TIMER_PERIOD;
     using namespace cms::test;
     auto handle = CreateAndStartAutoReload(TEST_PERIOD);
-    CHECK_TRUE(mUnderTest->IsTimerActive(handle));
+    CHECK_TRUE(mUnderTest->TimerIsActive(handle));
 
     //move time a bit forward
     mUnderTest->Tick();

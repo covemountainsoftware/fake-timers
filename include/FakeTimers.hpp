@@ -260,7 +260,7 @@ public:
      * @return: the user context provided when the timer was created
      * @note: Reference FreeRTOS pvTimerGetTimerID
      */
-    UserContext GetTimerContext(TimerHandle handle) const
+    UserContext TimerGetContext(TimerHandle handle) const
     {
         const Timer& timer = mTimers.at(handle - 1);
         assert(timer.handle == handle);
@@ -275,7 +275,7 @@ public:
      * @return the timer name provided when created.
      * @note: Reference FreeRTOS pcTimerGetName
      */
-    const char * GetTimerName(TimerHandle handle) const
+    const char * TimerGetName(TimerHandle handle) const
     {
         const Timer& timer = mTimers.at(handle - 1);
         assert(timer.handle == handle);
@@ -290,7 +290,7 @@ public:
      * @return
      * @note: Reference FreeRTOS xTimerGetPeriod
      */
-    TimerDuration GetTimerPeriod(TimerHandle handle) const
+    TimerDuration TimerGetPeriod(TimerHandle handle) const
     {
         const Timer& timer = mTimers.at(handle - 1);
         assert(timer.handle == handle);
@@ -305,7 +305,7 @@ public:
      * @return
      * @note: Reference FreeRTOS xTimerGetReloadMode
      */
-    TimerBehavior GetTimerBehavior(TimerHandle handle) const
+    TimerBehavior TimerGetBehavior(TimerHandle handle) const
     {
         const Timer& timer = mTimers.at(handle - 1);
         assert(timer.handle == handle);
@@ -323,7 +323,7 @@ public:
      *               and not yet been restarted.
      * @note: Reference FreeRTOS xTimerIsTimerActive
      */
-    bool IsTimerActive(TimerHandle handle) const
+    bool TimerIsActive(TimerHandle handle) const
     {
         using namespace std::chrono_literals;
 
