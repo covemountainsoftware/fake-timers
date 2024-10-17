@@ -20,7 +20,7 @@ include_directories(${CPPUTEST_INCLUDE_DIRS})
 link_directories(${CPPUTEST_LIBRARIES})
 
 add_executable(${TEST_APP_NAME} ${TEST_SOURCES})
-target_link_libraries(${TEST_APP_NAME} ${APP_LIB_NAME} ${CPPUTEST_LDFLAGS} )
+target_link_libraries(${TEST_APP_NAME} ${APP_LIB_NAME} ${CPPUTEST_LDFLAGS} fake-timers-lib)
 
 # (5) Run the test once the build is done
 add_custom_command(TARGET ${TEST_APP_NAME} COMMAND ./${TEST_APP_NAME} POST_BUILD)
